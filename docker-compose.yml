@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  rsshub:
+    image: diygod/rsshub:latest
+    container_name: rsshub
+    ports:
+      - "1200:1200"
+    restart: always
+    environment:
+      - CACHE_TYPE=memory
+      - CACHE_EXPIRE=300
+
+  trendradar:
+    build: .
+    container_name: trendradar
+    volumes:
+      - ./config:/app/config
+      - ./output:/app/output
+    environment:
+      - AI_API_KEY=${AI_API_KEY}
+      - AI_MODEL=${AI_MODEL:-openai/doubao-seed-1-8-251228}
+      - AI_API_BASE=${AI_API_BASE:-https://ark.cn-beijing.volces.com/api/v3}
+      - RSSHUB_URL=http://rsshub:1200
+    depends_on:
+      - rsshub
+    restart: always
+    # 定时运行（每2小时）
+    labels:
+      - "ofelia.enabled=true"
+      - "ofelia.job-exec.trendradar.schedule=0 */2 * * *"
+      - "ofelia.job-exec.trendradar.command=python -m trendradar"
